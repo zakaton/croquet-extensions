@@ -1,0 +1,115 @@
+<html>
+    <head>
+        <title>Croquet Encryption</title>
+        <link rel="shortcut icon" href="../icon.png" type="image/x-icon" />
+
+        <script src="https://croquet.studio/sdk/croquet-latest.min.js"></script>
+    </head>
+
+    <body>
+        <h1>Croquet Encryption</h1>
+
+        <ul>
+            <li data-encryption>
+                <h2>Encryption</h2>
+                <ul>
+                    <li>Public Key: <input readonly data-encryption="publicKey"></input></li>
+                    <li>Private Key: <input readonly data-encryption="secretKey"></input></li>
+                    <li>Nonce: <input readonly id=nonceInput ></input></li>
+                    <li>Input: <input type="text" id=encryptionInput cols=80></input> <button id=encryptButton>Encrypt</button></li>
+                    <li>Output: <input readonly type="text" id=encryptionOutput></input> <button id=decryptButton>Decrypt</button></li>
+                </ul>
+            </li>
+
+            <li data-signature>
+                <h2>Signing</h2>
+                <ul>
+                    <li>Public Key: <input readonly data-signature="publicKey"></input></li>
+                    <li>Private Key: <input readonly data-signature="secretKey"></input></li>
+                    <li>Input: <input type="text" id=signatureInput cols=80></input> <button id="signButton">Sign</button></li>
+                    <li>Output: <input readonly type="text" id=signatureOutput></input> <button id="verifyButton">Verify</button> <span id="verifySpan"></span></li>
+                </ul>
+            </li>
+        </ul>
+
+        <hr>
+    </body>
+
+    <script type="module" defer>
+        import Extender from "../extension.js";
+        import Encryption from "./extension.js";
+
+        class Model extends Extender.extendModel(Croquet.Model, Encryption.modelExtension) {
+            init() {
+                super.init();
+            }
+        }
+
+        class View extends Extender.extendView(Croquet.View, Encryption.viewExtension) {
+            constructor(model) {
+                super(model);
+                this.model = model;
+                window.view = this;
+
+                if(localStorage.getItem("keyPairs") !== null) {
+                    this.keyPairs = JSON.parse(localStorage.getItem("keyPairs"));
+                    ["encryption", "signature"].forEach(keyPairType => {
+                        ["publicKey", "secretKey"].forEach(keyType => {
+                            this.keyPairs[keyPairType][keyType] = new Uint8Array(Object.values(this.keyPairs[keyPairType][keyType]));
+                        });
+                    });
+                }
+                else {
+                    localStorage.setItem("keyPairs", JSON.stringify(this.keyPairs));
+                }
+
+                ["encryption", "signature"].forEach(keyPairType => {
+                    ["publicKey", "secretKey"].forEach(keyType => {
+                        document.querySelector(`[data-${keyPairType}="${keyType}"]`).value = this.keyPairs[keyPairType][keyType];
+                    });
+                });
+
+                encryptButton.addEventListener("click", event => {
+                    const message = encryptionInput.value;
+                    if(message.length > 0) {
+                        encryptionInput.value = '';
+                        const {nonce, encryption} = this.encrypt(message, this.keyPairs.encryption.publicKey);
+                        nonceInput.value = nonceInput._value = nonce;
+                        encryptionOutput.value = encryptionOutput._value = encryption;
+                    }
+                });
+
+                decryptButton.addEventListener("click", event => {
+                    const encryption = encryptionOutput._value;
+                    const nonce = nonceInput._value;
+                    if(encryption.length > 0) {
+                        const decryption = this.decrypt(encryption, this.keyPairs.encryption.publicKey, nonce);
+                        if(decryption !== null) {
+                            const message = this.decode(decryption);
+                            encryptionInput.value = message;
+                            encryptionOutput.value = '';
+                        }
+                    }
+                });
+
+                signButton.addEventListener("click", event => {
+                    const message = signatureInput.value;
+                    if(message.length > 0) {
+                        const signature = this.sign(message);
+                        signatureOutput.value = signatureOutput.signature = signature;
+                    }
+                });
+                verifyButton.addEventListener("click", event => {
+                    const message = signatureInput.value;
+                    const signature = signatureOutput.signature;
+                    if(message.length > 0 && signature.length > 0) {
+                        verifySpan.innerText = this.verify(message, signature);
+                    }
+                })
+            }
+        }
+
+        Model.register();
+        Croquet.startSession("croquet-extensions", Model, View);
+    </script>
+</html>

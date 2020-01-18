@@ -1,0 +1,96 @@
+<html>
+    <head>
+        <title>Croquet Users</title>
+        <link rel="shortcut icon" href="../icon.png" type="image/x-icon" />
+
+        <script src="https://croquet.studio/sdk/croquet-latest.min.js"></script>
+    </head>
+
+    <body>
+        <h1>Croquet Users</h1>
+
+        <ul>
+            <li>
+                <h2>Users</h2>
+                <ul>
+                    <li>
+                        <h3>User #1</h3>
+                        <ul>
+                            <li>Username: <span>Username</span></li>
+                            <li>
+                                Public Keys:
+                                <ul>
+                                    <li>Encryption: <span>Public Key</span></li>
+                                    <li>Signature: <span>Public Key</span></li>
+                                </ul>
+                            </li>
+                            <li>
+                                View Ids:
+                                <ul>
+                                    <li><span>1234</span></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+                <input type="text">
+                <button>Change Username</button>
+            </li>
+
+            <li>
+                <h2>Public Chat</h2>
+                <ul>
+                    <li>User: Hello</li>
+                </ul>
+                <input type="text">
+                <button>Send</button>
+            </li>
+
+            <li>
+                <h2>Private Chats</h2>
+                <ul>
+                    <h3>Chat with User #2</h3>
+                    <ul>
+                        <li>Them: Hey</li>
+                        <li>You: Hey</li>
+                    </ul>
+                    <input type="text">
+                    <button>Send</button>
+                </ul>
+            </li>
+
+            <li>
+                <h2>Private Storage</h2>
+                <ul>
+                    <li>Key : Value</li>
+                </ul>
+                Key: <input id=keyInput type="text"> |
+                Value: <input id=valueInput type="text">
+                <button id=setButton>Set</button>
+                <button id=getButton>Get</button>
+            </li>
+        </ul>
+    </body>
+
+    <script type="module" defer>
+        import Extender from "../extension.js";
+        import UserExtension from "./extension.js";
+
+        class Model extends Extender.extendModel(Croquet.Model, UserExtension.modelExtension) {
+            init() {
+                super.init();
+                window.model = this;
+            }
+        }
+
+        class View extends Extender.extendView(Croquet.View, UserExtension.viewExtension) {
+            constructor(model) {
+                super(model);
+                window.view = this;
+            }
+        }
+
+        Model.register();
+        Croquet.startSession("croquet-extensions-users", Model, View);
+    </script>
+</html>
