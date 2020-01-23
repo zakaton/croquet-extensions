@@ -1,0 +1,50 @@
+<html>
+    <head>
+        <title>Croquet Repeater</title>
+        <link rel="shortcut icon" href="../icon.png" type="image/x-icon" />
+
+        <script src="https://croquet.studio/sdk/croquet-latest.min.js"></script>
+    </head>
+
+    <body>
+        <h1>Croquet Promises</h1>
+
+        <h2>Promise Logs</h2>
+        <ul id=logs></ul>
+    </body>
+
+    <script type="module" defer>
+        import Extender from "../extension.js";
+        import PromiseExtension from "./extension.js";
+
+        class Model extends Extender.extendModel(Croquet.Model, PromiseExtension.modelExtension) {
+            init() {
+                super.init();
+                this.subscribe(this.sessionId, "event1", this.callback);
+            }
+
+            callback(data) {
+                this.publish(this.sessionId, "event2", data);
+            }
+        }
+
+        class View extends Extender.extendView(Croquet.View, PromiseExtension.viewExtension) {
+            constructor(model) {
+                super(model);
+                this.model = model;
+                window.view = this;
+
+                const data = "Hello!";
+                logs.innerHTML += `<li>Sending Promise ${JSON.stringify(data)}</li>`;
+                view.publishPromise(this.sessionId, "event1", data, this.sessionId, "event2")
+                    .then(data => {
+                        logs.innerHTML += `<li>Resolved Promise ${JSON.stringify(data)}</li>`;
+                        console.log("promise resolved!", data);
+                    });
+            }
+        }
+
+        Model.register();
+        Croquet.startSession("croquet-extension-promise-12345", Model, View);
+    </script>
+</html>

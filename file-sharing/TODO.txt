@@ -1,0 +1,9 @@
+Create Torrent
+    metadata (context of the file)
+    broadcastSigned to verify sender
+Add Torrent
+    Filtering useless torrents?
+Torrent Completed
+    dispatch event for each seeder
+
+view.share(file) => view.addEventListener("share-file", {fromIndex, file, context});

@@ -85,7 +85,7 @@
                     if(encryption.length > 0) {
                         const decryption = this.decrypt(encryption, this.keyPairs.encryption.publicKey, nonce);
                         if(decryption !== null) {
-                            const message = this.decode(decryption);
+                            const message = decryption;
                             encryptionInput.value = message;
                             encryptionOutput.value = '';
                         }
@@ -110,6 +110,6 @@
         }
 
         Model.register();
-        Croquet.startSession("croquet-extensions", Model, View);
+        Croquet.startSession("croquet-extensions-encryption", Model, View);
     </script>
 </html>

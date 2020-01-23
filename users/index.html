@@ -12,62 +12,19 @@
         <ul>
             <li>
                 <h2>Users</h2>
-                <ul>
-                    <li>
-                        <h3>User #1</h3>
-                        <ul>
-                            <li>Username: <span>Username</span></li>
-                            <li>
-                                Public Keys:
-                                <ul>
-                                    <li>Encryption: <span>Public Key</span></li>
-                                    <li>Signature: <span>Public Key</span></li>
-                                </ul>
-                            </li>
-                            <li>
-                                View Ids:
-                                <ul>
-                                    <li><span>1234</span></li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-                <input type="text">
-                <button>Change Username</button>
+                <ul id=usersList></ul>
             </li>
 
             <li>
                 <h2>Public Chat</h2>
-                <ul>
-                    <li>User: Hello</li>
-                </ul>
-                <input type="text">
-                <button>Send</button>
+                <ul id=publicChatList></ul>
+                <input id=publicChatInput type="text">
+                <button disabled id=publicChatButton>Send</button>
             </li>
 
             <li>
                 <h2>Private Chats</h2>
-                <ul>
-                    <h3>Chat with User #2</h3>
-                    <ul>
-                        <li>Them: Hey</li>
-                        <li>You: Hey</li>
-                    </ul>
-                    <input type="text">
-                    <button>Send</button>
-                </ul>
-            </li>
-
-            <li>
-                <h2>Private Storage</h2>
-                <ul>
-                    <li>Key : Value</li>
-                </ul>
-                Key: <input id=keyInput type="text"> |
-                Value: <input id=valueInput type="text">
-                <button id=setButton>Set</button>
-                <button id=getButton>Get</button>
+                <ul id="privateChatList"></ul>
             </li>
         </ul>
     </body>
@@ -79,18 +36,94 @@
         class Model extends Extender.extendModel(Croquet.Model, UserExtension.modelExtension) {
             init() {
                 super.init();
-                window.model = this;
             }
         }
 
         class View extends Extender.extendView(Croquet.View, UserExtension.viewExtension) {
             constructor(model) {
                 super(model);
+                this.model = model;
                 window.view = this;
+
+                this.subscribe(this.sessionId, "new-user", userIndex => {
+                    console.log("new-user", userIndex)
+                    const user = this.model.users[userIndex];
+                    usersList.innerHTML += `
+                        <li>
+                            <h3>User #${userIndex}</h3>
+                            <ul>
+                                <li>
+                                    <h4>Public Keys</h4>
+                                    <ul>
+                                        <li>Signature: ${user.publicKeys.signature}</li>
+                                        <li>Encryption: ${user.publicKeys.encryption}</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                    `;
+
+                    privateChatList.innerHTML += `
+                        <li data-private-chat="${userIndex}">
+                            <h3>Chat with User #${userIndex}</h3>
+                            <ul></ul>
+                            <input oninput="view.privateChatInput(event, ${userIndex}, this.value)" type="text"></input>
+                            <button onclick="view.privateChatButton(event, ${userIndex})">Send</button>
+                        </li>
+                    `;
+                });
+                
+                this.subscribe(this.sessionId, "public-chat", data => {
+                    console.log("public-chat", data);
+                    publicChatList.innerHTML += `
+                        <li>User #${data.fromIndex}: ${data.data}</li>
+                    `;
+                });
+
+                publicChatInput.addEventListener("input", event => {
+                    if(event.target.value.length > 0)
+                        publicChatButton.disabled = false;
+                });
+                publicChatButton.addEventListener("click", event => {
+                    this.broadcastSigned(this.sessionId, "public-chat", publicChatInput.value);
+                    publicChatInput.value = '';
+                    publicChatButton.disabled = true;
+                });true
+
+                this.subscribe(this.sessionId, "private-chat", data => {
+                    const message = this.decryptUserMessage(data);
+                    const {fromIndex, toIndex} = data;
+                    console.log("private-chat", message, fromIndex);
+                    
+                    if(message) {
+                        privateChatList.querySelector(`[data-private-chat="${fromIndex}"]`).innerHTML += `
+                            <li>(Them): ${message}</li>
+                        `;
+                    }
+                });
+
+                this.loadFromLocalStorage();
+                this.register();
+            }
+
+            privateChatInput(event, userIndex, value) {
+                const button = event.target.closest("[data-private-chat]").querySelector("button");
+                button.disabled = (value.length == 0);
+            }
+            privateChatButton(event, userIndex) {
+                const input = event.target.closest("[data-private-chat]").querySelector("input");
+                const message = input.value;
+                this.messageUser(this.sessionId, "private-chat", message, userIndex);
+                privateChatList.querySelector(`[data-private-chat="${userIndex}"]`).innerHTML += `
+                    <li>(You): ${message}</li>
+                `;
+                
+                event.target.disabled = true;
+                input.value = '';
             }
         }
 
         Model.register();
-        Croquet.startSession("croquet-extensions-users", Model, View);
+        Croquet.startSession("croquet-extension-users-00", Model, View);
     </script>
 </html>

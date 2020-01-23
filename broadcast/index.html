@@ -1,0 +1,41 @@
+<html>
+    <head>
+        <title>Croquet Repeater</title>
+        <link rel="shortcut icon" href="../icon.png" type="image/x-icon" />
+
+        <script src="https://croquet.studio/sdk/croquet-latest.min.js"></script>
+    </head>
+
+    <body>
+        <h1>Croquet Broadcaster</h1>
+
+        <h2>Events</h2>
+        <ul id=events></ul>
+    </body>
+
+    <script type="module" defer>
+        import Extender from "../extension.js";
+        import BroadcastExtension from "./extension.js";
+
+        class Model extends Extender.extendModel(Croquet.Model, BroadcastExtension.modelExtension) {
+            init() {
+                super.init();
+            }
+        }
+
+        class View extends Extender.extendView(Croquet.View, BroadcastExtension.viewExtension) {
+            constructor(model) {
+                super(model);
+                this.model = model;
+                window.view = this;
+                
+                this.subscribe(this.sessionId, "my-custom-event", data => {
+                    events.innerHTML += `<li>${JSON.stringify(data)}</li>`;
+                });
+            }
+        }
+
+        Model.register();
+        Croquet.startSession("croquet-extension-broadcast-z", Model, View);
+    </script>
+</html>

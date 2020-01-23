@@ -1,0 +1,53 @@
+<html>
+    <head>
+        <title>Croquet Extension Template</title>
+        <link rel="shortcut icon" href="../icon.png" type="image/x-icon" />
+
+        <script src="https://croquet.studio/sdk/croquet-latest.min.js"></script>
+    </head>
+
+    <body>
+        <h1>Croquet File-Sharing</h1>
+
+        <input id=fileInput type="file">
+
+        <h2>Torrents</h2>
+        <ul id=torrentList></ul>
+    </body>
+
+    <script type="module" defer>
+        import Extender from "../extension.js";
+        import FileSharingExtension from "./extension.js";
+
+        class Model extends Extender.extendModel(Croquet.Model, FileSharingExtension.modelExtension) {
+            init() {
+                super.init();
+            }
+        }
+
+        class View extends Extender.extendView(Croquet.View, FileSharingExtension.viewExtension) {
+            constructor(model) {
+                super(model);
+                this.model = model;
+                window.view = this;
+
+                this.loadFromLocalStorage();
+                this.register();
+
+                fileInput.addEventListener("input", event => {
+                    const file = fileInput.files[0];
+                    this.client.seed(file);
+                });
+
+                this.subscribe(this.sessionId, "new-torrent", data => {
+                    const {magnetURI} = data.data;
+                    console.log(magnetURI)
+                    //this.client.add(magnetURI);
+                });
+            }
+        }
+
+        Model.register();
+        Croquet.startSession("croquet-filesharing-1", Model, View);
+    </script>
+</html>
