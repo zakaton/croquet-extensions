@@ -35,19 +35,17 @@
                 this.register();
 
                 fileInput.addEventListener("input", event => {
-                    const file = fileInput.files[0];
-                    this.client.seed(file);
+                    this.share(fileInput.files[0], {hello : "world"});
                 });
 
-                this.subscribe(this.sessionId, "new-torrent", data => {
-                    const {magnetURI} = data.data;
-                    console.log(magnetURI)
-                    //this.client.add(magnetURI);
+                this.addEventListener("share", event => {
+                    const {files} = event.message;
+                    files[0].appendTo("body");
                 });
             }
         }
 
         Model.register();
-        Croquet.startSession("croquet-filesharing-1", Model, View);
+        Croquet.startSession("croquet-filesharing-10", Model, View);
     </script>
 </html>

@@ -97,13 +97,22 @@
                         usersList.appendChild(html.li);
     
                         if(userIndex == this.userIndex) {
-                            navigator.mediaDevices.getUserMedia({
-                                video : true,
-                                audio : true,
-                            }).then(stream => {
-                                this.stream = stream;
-                                html.video.srcObject = stream;
-                            });
+                            if(true) {
+                                navigator.mediaDevices.getUserMedia({
+                                    video : true,
+                                    audio : true,
+                                }).then(stream => {
+                                    this.stream = stream;
+                                    html.video.srcObject = stream;
+                                });
+                            }
+                            else {
+                                navigator.mediaDevices.getDisplayMedia()
+                                    .then(stream => {
+                                        this.stream = stream;
+                                        html.video.srcObject = stream;
+                                    });
+                            }
                         }
                         else {
                             html.input.addEventListener("input", event => {
