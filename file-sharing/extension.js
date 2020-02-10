@@ -63,7 +63,7 @@ export default {
                             this.client.seed(file, torrent => {
                                 this.broadcastSigned(this.sessionId, "new-torrent", {
                                     magnetURI : torrent.magnetURI,
-                                    metadata
+                                    metadata : this.model.sortObject(metadata)
                                 });
                             });
                         });

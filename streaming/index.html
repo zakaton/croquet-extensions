@@ -47,6 +47,9 @@
                     peer.on("stream", stream => {
                         video.srcObject = stream;
                     });
+                    peer.on("track", (track, stream) => {
+                        console.log(track, stream);
+                    });
 
                     const fileChunks = [];
                     peer.on("data", encodedData => {

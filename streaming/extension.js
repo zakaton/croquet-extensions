@@ -23,13 +23,14 @@ export default {
                     this.setupPeer(userIndex);
                 });
                 this.subscribe(this.sessionId, "returning-user", userIndex => {
-                    //this.peers[userIndex]?.destroy();
+                    this.setupPeer(userIndex);
                 });
 
                 this.subscribe(this.sessionId, "user-exit", userIndex => {
                     const peer = this.peers[userIndex];
                     if(peer)
                         peer.destroy();
+                    this.setupPeer(userIndex);
                 });
 
                 this.addEventListener("peer-connected", event => {
@@ -115,10 +116,10 @@ export default {
                     const peer = new SimplePeer({
                         initiator : false,
                         trickle : false,
-                        answerConstraints: { 
+                        answerOptions: { 
                             mandatory: { 
-                                OfferToReceiveAudio: false, 
-                                OfferToReceiveVideo: false 
+                                OfferToReceiveAudio: true, 
+                                OfferToReceiveVideo: true 
                             } 
                         }
                     });
@@ -132,12 +133,12 @@ export default {
                     });
 
                     peer.on("close", () => {
-                        console.log("CLOSING!")
                         this.setupPeer(userIndex);
                     });
 
                     peer.on("error", error => {
                         peer.destroy();
+                        this.setupPeer(userIndex);
                     });
 
                     peer.on("signal", signalData => {
@@ -155,7 +156,7 @@ export default {
                         const peer = new SimplePeer({
                             initiator : true,
                             trickle : false,
-                            offerConstraints: { 
+                            answerOptions: { 
                                 mandatory: { 
                                     OfferToReceiveAudio: true, 
                                     OfferToReceiveVideo: true 
@@ -174,7 +175,6 @@ export default {
                         });
 
                         peer.on("close", () => {
-                            console.log("CLOSING!")
                             this.setupPeer(userIndex);
                         });
 

@@ -1,0 +1,34 @@
+<html>
+    <head>
+        <title>Multi Stream Extension</title>
+        <link rel="shortcut icon" href="../icon.png" type="image/x-icon" />
+
+        <script src="https://croquet.studio/sdk/croquet-latest.min.js"></script>
+    </head>
+
+    <body>
+        <h1>Multi Stream Extension</h1>
+    </body>
+
+    <script type="module" defer>
+        import Extender from "../extension.js";
+        import Extension from "./extension.js";
+
+        class Model extends Extender.extendModel(Croquet.Model, Extension.modelExtension) {
+            init() {
+                super.init();
+            }
+        }
+
+        class View extends Extender.extendView(Croquet.View, Extension.viewExtension) {
+            constructor(model) {
+                super(model);
+                this.model = model;
+                window.view = this;
+            }
+        }
+
+        Model.register();
+        Croquet.startSession("croquet-extension-multi-stream", Model, View);
+    </script>
+</html>

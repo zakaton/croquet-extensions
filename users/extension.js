@@ -16,6 +16,8 @@ export default {
                 this.subscribe(this.sessionId, "broadcast-signed", this.broadcastSigned);
 
                 this.subscribe(this.sessionId, "view-exit", this.viewExit);
+
+                this.subscribe(this.sessionId, "change-username", this.changeUsername);
             }
 
             findUserIndex(signaturePublicKey_or_viewId) {
@@ -95,6 +97,14 @@ export default {
                     });
                 }
             }
+
+            changeUsername() {
+                const {data, user} = this.unpackSignedUserMessage(this.sessionId, "change-username", ...arguments);
+                if(data && user) {
+                    user.username = data.username;
+                    this.publish(this.sessionId, "changed-username", this.users.indexOf(user));
+                }
+            }
         }
     },
     
@@ -108,7 +118,8 @@ export default {
             }
         
             register() {
-                if(!this.isRegistered) {
+                // re-registration calls the "returning-user" event
+                if(true || !this.isRegistered) {
                     this.publish(this.sessionId, "register", this.signData(this.sessionId, "register", {
                         timestamp : Date.now(),
                         encryptionPublicKey : this.keyPairs.encryption.publicKey,
@@ -159,8 +170,19 @@ export default {
                 }
             }
             decryptUserMessage({toIndex, fromIndex, data}) {
-                if(this.userIndex == toIndex) {
-                    return this.decryptUserData(data, fromIndex);
+                if(this.userIndex == toIndex || this.userIndex == fromIndex) {
+                    return this.decryptUserData(data, (this.userIndex == toIndex)? fromIndex:toIndex);
+                }
+            }
+
+            get username() {
+                return this.model.users[this.userIndex].username;
+            }
+            set username(username) {
+                if(username.length > 0) {
+                    this.publish(this.sessionId, "change-username", this.signData(this.sessionId, "change-username", {
+                        username,
+                    }));
                 }
             }
         }
