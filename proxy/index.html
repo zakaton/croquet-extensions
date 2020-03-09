@@ -1,0 +1,41 @@
+<html>
+    <head>
+        <title>Croquet Proxy Extension</title>
+        <link rel="shortcut icon" href="../icon.png" type="image/x-icon" />
+
+        <script src="https://croquet.studio/sdk/croquet-latest.min.js"></script>
+    </head>
+
+    <body>
+        <h1>Croquet Proxy</h1>
+
+        <div id=logs>
+
+        </div>
+    </body>
+
+    <script type="module" defer>
+        import Extender from "../extension.js";
+        import ProxyExtension from "./extension.js";
+
+        class Model extends Extender.extendModel(Croquet.Model, ProxyExtension.modelExtension) {
+            init() {
+                super.init();
+            }
+        }
+
+        class View extends Extender.extendView(Croquet.View, ProxyExtension.viewExtension) {
+            constructor(model) {
+                super(model);
+                window.view = this;
+
+                this.addEventListener("didSet", event => {
+                    console.log(event);
+                });
+            }
+        }
+
+        Model.register();
+        Croquet.startSession("croquet-proxy-extension", Model, View);
+    </script>
+</html>
