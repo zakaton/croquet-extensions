@@ -3,6 +3,15 @@
         <title>Croquet Streaming</title>
         <link rel="shortcut icon" href="../icon.png" type="image/x-icon" />
 
+        <!-- https://github.com/dchest/tweetnacl-js -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.1/nacl-fast.min.js"></script>
+
+        <!-- https://github.com/feross/simple-peer -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.6.2/simplepeer.min.js"></script>
+
+        <!-- https://threejs.org/docs/#api/en/core/EventDispatcher -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+        
         <script src="https://croquet.studio/sdk/croquet-latest.min.js"></script>
     </head>
 
@@ -68,103 +77,105 @@
                     });
                 });
 
-                this.subscribe(this.sessionId, "new-user", userIndex => {
-                    const selector = `[data-user-index="${userIndex}"]`;
+                this.subscribe(this.sessionId, "new-user", this.initiateUser);
+                this.model.users.forEach((user, userIndex) => this.initiateUser(userIndex));
+            }
 
-                    if(document.querySelector(selector) == null) {
-                        const html = {
-                            li : document.createElement("li"),
-                            h3 : document.createElement("h3"),
-                            video : document.createElement("video"),
-                            button : document.createElement("button"),
-                            input : document.createElement("input")
-                        };
-                        
-                        html.li.dataset.userIndex = userIndex;
+            initiateUser(userIndex) {
+                const selector = `[data-user-index="${userIndex}"]`;
 
-                        html.h3.innerText = `User #${userIndex} ${userIndex == this.userIndex? '(YOU)':''}`;
-                        html.li.appendChild(html.h3);
+                if(document.querySelector(selector) == null) {
+                    const html = {
+                        li : document.createElement("li"),
+                        h3 : document.createElement("h3"),
+                        video : document.createElement("video"),
+                        button : document.createElement("button"),
+                        input : document.createElement("input")
+                    };
+                    
+                    html.li.dataset.userIndex = userIndex;
 
-                        html.video.autoplay = true;
-                        html.video.muted = (userIndex == this.userIndex);
-                        html.li.appendChild(html.video);
+                    html.h3.innerText = `User #${userIndex} ${userIndex == this.userIndex? '(YOU)':''}`;
+                    html.li.appendChild(html.h3);
 
-                        html.button.innerText = "Connect";
-                        html.button.disabled = (userIndex == this.userIndex);
-                        html.li.appendChild(html.button);
-                        
-                        html.input.type = "file";
-                        html.input.disabled = true;
-                        html.li.appendChild(html.input);
+                    html.video.autoplay = true;
+                    html.video.muted = (userIndex == this.userIndex);
+                    html.li.appendChild(html.video);
 
-                        usersList.appendChild(html.li);
-    
-                        if(userIndex == this.userIndex) {
-                            if(true) {
-                                navigator.mediaDevices.getUserMedia({
-                                    video : true,
-                                    audio : true,
-                                }).then(stream => {
+                    html.button.innerText = "Connect";
+                    html.button.disabled = (userIndex == this.userIndex);
+                    html.li.appendChild(html.button);
+                    
+                    html.input.type = "file";
+                    html.input.disabled = true;
+                    html.li.appendChild(html.input);
+
+                    usersList.appendChild(html.li);
+                    
+                    if(userIndex == this.userIndex) {
+                        if(true) {
+                            navigator.mediaDevices.getUserMedia({
+                                video : true,
+                                audio : true,
+                            }).then(stream => {
+                                this.stream = stream;
+                                html.video.srcObject = stream;
+                            });
+                        }
+                        else {
+                            navigator.mediaDevices.getDisplayMedia()
+                                .then(stream => {
                                     this.stream = stream;
                                     html.video.srcObject = stream;
                                 });
-                            }
-                            else {
-                                navigator.mediaDevices.getDisplayMedia()
-                                    .then(stream => {
-                                        this.stream = stream;
-                                        html.video.srcObject = stream;
-                                    });
-                            }
-                        }
-                        else {
-                            html.input.addEventListener("input", event => {
-                                const file = event.target.files[0];
-                                const peer = this.peers[userIndex];
-                                const reader = new FileReader();
-                                const chunkLength = 10000;
-                                reader.readAsDataURL(file);
-                                const readerCallback = (event, text) => {
-                                    const data = {};
-
-                                    if(event)
-                                        text = event.target.result;
-
-                                    if(text.length > chunkLength)
-                                        data.chunk = text.slice(0, chunkLength);
-                                    else
-                                        Object.assign(data, {
-                                            chunk : text,
-                                            last : true,
-                                        });
-                                    
-                                    peer.send(JSON.stringify(data));
-
-                                    const remainingData = text.slice(data.chunk.length);
-                                    console.log(remainingData)
-                                    if(remainingData.length > 0)
-                                        setTimeout(() => {
-                                            readerCallback(null, remainingData);
-                                        }, 500);
-                                }
-                                reader.onload = readerCallback;
-                            });
-
-                            html.button.addEventListener("click", event => {
-                                this.connectPeer(userIndex)
-                                    .then(() => {
-                                        html.button.disabled = true;
-                                        html.input.disabled = false;
-                                    });
-                            });
                         }
                     }
-                });
+                    else {
+                        html.input.addEventListener("input", event => {
+                            const file = event.target.files[0];
+                            const peer = this.peers[userIndex];
+                            const reader = new FileReader();
+                            const chunkLength = 10000;
+                            reader.readAsDataURL(file);
+                            const readerCallback = (event, text) => {
+                                const data = {};
 
+                                if(event)
+                                    text = event.target.result;
+
+                                if(text.length > chunkLength)
+                                    data.chunk = text.slice(0, chunkLength);
+                                else
+                                    Object.assign(data, {
+                                        chunk : text,
+                                        last : true,
+                                    });
+                                
+                                peer.send(JSON.stringify(data));
+
+                                const remainingData = text.slice(data.chunk.length);
+                                console.log(remainingData)
+                                if(remainingData.length > 0)
+                                    setTimeout(() => {
+                                        readerCallback(null, remainingData);
+                                    }, 500);
+                            }
+                            reader.onload = readerCallback;
+                        });
+
+                        html.button.addEventListener("click", event => {
+                            this.connectPeer(userIndex)
+                                .then(() => {
+                                    html.button.disabled = true;
+                                    html.input.disabled = false;
+                                });
+                        });
+                    }
+                }
             }
         }
 
         Model.register();
-        Croquet.startSession("croquet-streaming-extension-hellllo", Model, View);
+        Croquet.startSession("croquet-streaming-extension-01", Model, View);
     </script>
 </html>

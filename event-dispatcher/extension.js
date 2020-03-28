@@ -1,5 +1,4 @@
 import Extender from "../extension.js";
-import {EventDispatcher} from "../node_modules/three/src/core/EventDispatcher.js";
 
 export default {
     modelExtension(Model) {
@@ -10,7 +9,7 @@ export default {
         }
     },
     viewExtension(View) {
-        Object.assign(View.prototype, EventDispatcher.prototype);
+        Object.assign(View.prototype, THREE.EventDispatcher.prototype);
         return class extends Extender.extendView(View) {
             constructor(model) {
                 super(model);

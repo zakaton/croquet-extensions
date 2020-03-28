@@ -1,9 +1,6 @@
 import Extender from "../extension.js";
 import UsersExtension from "../users/extension.js";
 
-// https://github.com/feross/simple-peer
-import {} from "../node_modules/simple-peer/simplepeer.min.js";
-
 export default {
     modelExtension(Model) {
         return class extends Extender.extendModel(Model, UsersExtension.modelExtension) {
@@ -116,12 +113,6 @@ export default {
                     const peer = new SimplePeer({
                         initiator : false,
                         trickle : false,
-                        answerOptions: { 
-                            mandatory: { 
-                                OfferToReceiveAudio: true, 
-                                OfferToReceiveVideo: true 
-                            } 
-                        }
                     });
 
                     peer.on("connect", () => {
@@ -156,12 +147,6 @@ export default {
                         const peer = new SimplePeer({
                             initiator : true,
                             trickle : false,
-                            answerOptions: { 
-                                mandatory: { 
-                                    OfferToReceiveAudio: true, 
-                                    OfferToReceiveVideo: true 
-                                } 
-                            }
                         });
 
                         peer.on("connect", () => {

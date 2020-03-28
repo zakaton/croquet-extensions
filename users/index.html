@@ -3,6 +3,12 @@
         <title>Croquet Users</title>
         <link rel="shortcut icon" href="../icon.png" type="image/x-icon" />
 
+        <!-- https://github.com/dchest/tweetnacl-js -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.1/nacl-fast.min.js"></script>
+
+        <!-- https://threejs.org/docs/#api/en/core/EventDispatcher -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+
         <script src="https://croquet.studio/sdk/croquet-latest.min.js"></script>
     </head>
 
@@ -44,34 +50,6 @@
                 super(model);
                 this.model = model;
                 window.view = this;
-
-                this.subscribe(this.sessionId, "new-user", userIndex => {
-                    console.log("new-user", userIndex)
-                    const user = this.model.users[userIndex];
-                    usersList.innerHTML += `
-                        <li>
-                            <h3>User #${userIndex}</h3>
-                            <ul>
-                                <li>
-                                    <h4>Public Keys</h4>
-                                    <ul>
-                                        <li>Signature: ${user.publicKeys.signature}</li>
-                                        <li>Encryption: ${user.publicKeys.encryption}</li>
-                                    </ul>
-                                </li>
-                            </ul>
-                        </li>
-                    `;
-
-                    privateChatList.innerHTML += `
-                        <li data-private-chat="${userIndex}">
-                            <h3>Chat with User #${userIndex}</h3>
-                            <ul></ul>
-                            <input oninput="view.privateChatInput(event, ${userIndex}, this.value)" type="text"></input>
-                            <button onclick="view.privateChatButton(event, ${userIndex})">Send</button>
-                        </li>
-                    `;
-                });
                 
                 this.subscribe(this.sessionId, "public-chat", data => {
                     console.log("public-chat", data);
@@ -104,6 +82,9 @@
 
                 this.loadFromLocalStorage();
                 this.register();
+
+                this.subscribe(this.sessionId, "new-user", this.initiateUser);
+                this.model.users.forEach((user, userIndex) => this.initiateUser(userIndex))
             }
 
             privateChatInput(event, userIndex, value) {
@@ -121,9 +102,37 @@
                 event.target.disabled = true;
                 input.value = '';
             }
+
+            initiateUser(userIndex) {
+                console.log("new-user", userIndex, this.userIndex)
+                const user = this.model.users[userIndex];
+                usersList.innerHTML += `
+                    <li>
+                        <h3>User #${userIndex} ${this.userIndex == userIndex? "(YOU)":''}</h3>
+                        <ul>
+                            <li>
+                                <h4>Public Keys</h4>
+                                <ul>
+                                    <li>Signature: ${user.publicKeys.signature}</li>
+                                    <li>Encryption: ${user.publicKeys.encryption}</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                `;
+
+                privateChatList.innerHTML += `
+                    <li data-private-chat="${userIndex}">
+                        <h3>Chat with User #${userIndex} ${userIndex == this.userIndex? "(YOU)":''}</h3>
+                        <ul></ul>
+                        <input oninput="view.privateChatInput(event, ${userIndex}, this.value)" type="text"></input>
+                        <button onclick="view.privateChatButton(event, ${userIndex})">Send</button>
+                    </li>
+                `;
+            }
         }
 
         Model.register();
-        Croquet.startSession("croquet-extension-users-00", Model, View);
+        Croquet.startSession("croquet-extension-users-02", Model, View);
     </script>
 </html>

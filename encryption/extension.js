@@ -1,5 +1,3 @@
-// https://github.com/dchest/tweetnacl-js
-import {} from "../node_modules/tweetnacl/nacl-fast.min.js";
 function newNonce() {return nacl.randomBytes(nacl.box.nonceLength)};
 
 const textEncoder = new TextEncoder();
